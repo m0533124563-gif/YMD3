@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>YMD3 — סדנת תלת-ממד</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #14171a;
+    --panel: #1c2024;
+    --panel-2: #22272b;
+    --line: #33393e;
+    --blueprint: #4a8b8e;
+    --amber: #e8a33d;
+    --text: #e7e9eb;
+    --muted: #8b939a;
+    --danger: #d9694f;
+  }
+  *{ box-sizing: border-box; }
+  .app{
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    height: 660px;
+    min-height: 660px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Hebrew', sans-serif;
+    direction: rtl;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  @media (max-width: 860px){
+    .app{ grid-template-columns: 1fr; grid-template-rows: auto 480px; height:auto; min-height:auto;}
+  }
+  @media (max-width: 480px){
+    .app{ grid-template-rows: auto 400px; }
+  }
+
+  .sidebar{
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    padding: 24px 22px;
+    overflow-y: auto;
+    display:flex;
+    flex-direction:column;
+    gap: 18px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 18px; font-weight:600; margin:0; letter-spacing:.2px;
+  }
+  .brand p{ margin:2px 0 0; font-size:12px; color: var(--muted); }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background: #1f2b2c; border:1px solid var(--blueprint); color: var(--blueprint);
+    font-size:11px; padding:4px 9px; border-radius:20px; width:fit-content;
+    font-family:'Space Grotesk', sans-serif; letter-spacing:.2px;
+  }
+  .badge .bdot{ width:6px; height:6px; border-radius:50%; background: var(--blueprint); }
+
+  .drop{
+    border: 1.5px dashed var(--line);
+    border-radius: 10px;
+    padding: 22px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition: border-color .15s ease, background .15s ease;
+    background: var(--panel-2);
+  }
+  .drop:hover, .drop.drag{ border-color: var(--blueprint); background: #1f2b2c; }
+  .drop input{ display:none; }
+  .drop .icon{ margin-bottom:8px; opacity:.8; }
+  .drop .main-txt{ font-size:14px; font-weight:500; }
+  .drop .sub-txt{ font-size:12px; color:var(--muted); margin-top:4px; }
+  .preview-thumb{
+    width:100%; border-radius:8px; display:block; margin-top:12px;
+    border:1px solid var(--line); max-height: 140px; object-fit:cover;
+  }
+
+  .tabbar{ display:flex; gap:6px; }
+  .tabbtn{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
+    border-radius:7px; padding:9px 6px; font-size:12.5px; cursor:pointer; font-family:inherit;
+  }
+  .tabbtn.active{ color:var(--text); border-color:var(--blueprint); background:#1f2b2c; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+  .field textarea{
+    width:100%; background: var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:7px; padding:9px 10px; font-family:inherit; font-size:13.5px; resize:none; min-height:64px;
+  }
+
+  .btn{
+    background: var(--amber); color: #201203; border:none; border-radius: 8px;
+    padding: 12px 16px; font-size:14.5px; font-weight:600; cursor:pointer; font-family:inherit;
+    transition: filter .15s ease, transform .05s ease;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ background: var(--line); color: var(--muted); cursor:not-allowed; }
+
+  .section-title{
+    font-family:'Space Grotesk', sans-serif; font-size: 12.5px; color: var(--blueprint);
+    font-weight:600; margin: 0 0 10px;
+  }
+
+  .spec-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; font-size:12.5px; }
+  .spec-grid .k{ color:var(--muted); }
+  .spec-grid .v{ color:var(--text); font-weight:500; }
+
+  .partslist{ display:flex; flex-direction:column; gap:6px; max-height:140px; overflow-y:auto; }
+  .partrow{
+    display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:6px 8px;
+  }
+  .partrow .swab{ width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+
+  .status{
+    font-size:12.5px; color: var(--muted); display:flex; align-items:center; gap:8px; min-height: 18px;
+  }
+  .dot{ width:7px;height:7px;border-radius:50%; background: var(--blueprint); flex-shrink:0; }
+  .dot.spin{ animation: pulse 1s infinite ease-in-out; }
+  @keyframes pulse{ 0%,100%{opacity:.35;} 50%{opacity:1;} }
+  .dot.err{ background: var(--danger); }
+  .dot.ok{ background: #6fbf73; }
+
+  .progressbar{
+    height:4px; background: var(--panel-2); border-radius:3px; overflow:hidden; display:none;
+  }
+  .progressbar.show{ display:block; }
+  .progressbar-fill{
+    height:100%; width:0%; background: var(--blueprint); transition: width .2s ease;
+  }
+
+  .divider{ height:1px; background:var(--line); margin: 2px 0; }
+
+  .note{ font-size:11.5px; color:var(--muted); line-height:1.65; }
+  .note b{ color: var(--text); }
+
+  .stage{ position:relative; background: radial-gradient(ellipse at 50% 30%, #1c2226 0%, #101315 70%); }
+  #canvas-holder{ width:100%; height:100%; }
+  .stage-hud{
+    position:absolute; top:18px; right:18px; font-family:'Space Grotesk', sans-serif;
+    font-size:12px; color: var(--muted); letter-spacing:.3px; text-align:right; pointer-events:none;
+  }
+  .stage-hud .line1{ color: var(--text); font-weight:600; font-size:14px; }
+  .stage-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px; color: var(--muted); text-align:center; padding: 20px;
+  }
+  .stage-empty svg{ opacity:.5; }
+  .stage-empty .t1{ color: var(--text); font-size:15px; font-weight:500; font-family:'Space Grotesk',sans-serif;}
+  .stage-empty .t2{ font-size:13px; max-width:300px; }
+
+  .hint{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    font-size:11.5px; color:var(--muted); background: rgba(20,23,26,.7);
+    padding:6px 12px; border-radius:20px; border:1px solid var(--line);
+  }
+  .rotate-toggle{
+    position:absolute; bottom:16px; right:18px; display:none;
+    align-items:center; gap:7px; font-size:12px; color:var(--text);
+    background: rgba(20,23,26,.75); border:1px solid var(--line);
+    padding:7px 13px; border-radius:20px; cursor:pointer; font-family:'IBM Plex Sans Hebrew',sans-serif;
+  }
+  .rotate-toggle:hover{ border-color: var(--blueprint); }
+  .rotate-toggle.active{ border-color: var(--amber); color: var(--amber); }
+  .backdrop-note{ font-size:11px; color:var(--muted); margin-top:6px; line-height:1.5; }
+
+  .bp-box{
+    position:absolute; border:2px dashed; box-sizing:border-box;
+    background: rgba(255,255,255,0.03); cursor:move;
+  }
+  .bp-box::before{
+    content: attr(data-label);
+    position:absolute; top:-1px; right:-1px; transform:translateY(-100%);
+    background:inherit; border:inherit; border-bottom:none;
+    font-size:10.5px; padding:2px 6px; color:var(--text);
+    background: #14171a; white-space:nowrap;
+  }
+  .bp-handle{
+    position:absolute; width:12px; height:12px; background:var(--text);
+    border-radius:50%; right:-6px; bottom:-6px; cursor:nwse-resize;
+  }
+  .bp-box{ touch-action:none; }
+  .bp-handle{ touch-action:none; width:22px; height:22px; }
+  @media (max-width: 480px){
+    .sidebar{ padding: 16px 14px; gap: 14px; }
+    .btn{ padding: 14px 16px; font-size:15px; }
+    .tabbtn{ padding: 11px 5px; font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">
+      <img id="brandLogoImg" src="data:image/png;base64,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" alt="YMD3 logo" style="width:36px; height:36px; border-radius:9px; object-fit:cover; flex-shrink:0;">
+      <div>
+        <h1>סדנת תלת-ממד</h1>
+        <p>רשת עומק אמיתית, רצה בדפדפן שלך</p>
+      </div>
+    </div>
+    <div class="badge"><span class="bdot"></span> ללא מפתחות API · ללא שרת · AI מקומי</div>
+
+    <div class="tabbar">
+      <button class="tabbtn active" id="tabImage">מתמונה (AI אמיתי)</button>
+      <button class="tabbtn" id="tabBlueprint">משרטוט (3 מבטים)</button>
+      <button class="tabbtn" id="tabText">מתיאור (תבנית קבועה)</button>
+    </div>
+
+    <div id="imageInputBlock">
+      <label class="drop" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="#8b939a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#8b939a" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <div class="main-txt">גרור כל תמונה, או לחץ לבחירה</div>
+        <div class="sub-txt">רכב, רהיט, כלי, בעל חיים, בניין — כל דבר · מייצר מודל מלא ב-360°</div>
+        <img id="previewImg" class="preview-thumb" style="display:none">
+      </label>
+
+      <label class="drop" id="backDropZone" style="margin-top:10px; padding:14px 12px;">
+        <input type="file" id="backFileInput" accept="image/*">
+        <div class="main-txt" style="font-size:12.5px;">+ תמונה אחורית (רשות)</div>
+        <div class="sub-txt">לשיפור דיוק ה-360°. בלעדיה, הצד האחורי יושלם באמידה סימטרית</div>
+        <img id="backPreviewImg" class="preview-thumb" style="display:none; max-height:80px;">
+      </label>
+
+      <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text); margin-top:12px; cursor:pointer;">
+        <input type="checkbox" id="bgRemoveToggle" checked style="width:16px; height:16px; accent-color:#4a8b8e;">
+        הסרת רקע/מסגרת אוטומטית (AI)
+      </label>
+      <div class="backdrop-note">רשת זיהוי-אובייקט אמיתית (בדפדפן, ללא מפתח API) מזהה מה חשוב בתמונה ומשאירה רק אותו — הרקע/המסגרת סביב האובייקט מוסרים מהמודל. אפשר לכבות אם התמונה כבר על רקע נקי או שאתה רוצה את כל הפריים.</div>
+    </div>
+
+    <div id="blueprintInputBlock" style="display:none">
+      <label class="drop" id="bpDropZone">
+        <input type="file" id="bpFileInput" accept="image/*">
+        <div class="main-txt">העלה משרטוט עם 3-4 מבטים (צד/חזית/עליון/אחור)</div>
+        <div class="sub-txt">כמו תרשים יצרן: מבט צד, מבט חזית, מבט מלמעלה, על אותה תמונה</div>
+      </label>
+      <div id="bpCropWrap" style="display:none; margin-top:10px;">
+        <div class="sub-txt" style="margin-bottom:6px;">גרור/שנה גודל כל מסגרת כדי שתתאים בדיוק למבט המתאים:</div>
+        <div id="bpCanvasHolder" style="position:relative; width:100%; border:1px solid var(--line); border-radius:8px; overflow:hidden; touch-action:none;">
+          <canvas id="bpCanvas"></canvas>
+          <div class="bp-box" id="bpBoxTop" data-label="עליון (Top)" style="border-color:#4a8b8e;"><div class="bp-handle" style="background:#4a8b8e;"></div></div>
+          <div class="bp-box" id="bpBoxSide" data-label="צד (Side)" style="border-color:#e8a33d;"><div class="bp-handle" style="background:#e8a33d;"></div></div>
+          <div class="bp-box" id="bpBoxFront" data-label="חזית (Front)" style="border-color:#d9694f;"><div class="bp-handle" style="background:#d9694f;"></div></div>
+        </div>
+        <div class="field" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:12px;">
+          <div><label>אורך (מ״מ)</label><input type="number" id="bpLength" value="4500" style="width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:7px 8px; font-family:inherit;"></div>
+          <div><label>רוחב (מ״מ)</label><input type="number" id="bpWidth" value="1850" style="width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:7px 8px; font-family:inherit;"></div>
+          <div><label>גובה (מ״מ)</label><input type="number" id="bpHeight" value="1420" style="width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:7px 8px; font-family:inherit;"></div>
+        </div>
+        <div class="sub-txt" style="margin-top:6px;">הזן את המידות האמיתיות הרשומות במשרטוט (אם יש) לדיוק מרבי — אחרת ההערכה תהיה יחסית בלבד.</div>
+      </div>
+    </div>
+
+    <div id="textInputBlock" style="display:none">
+      <div class="field">
+        <label>תאר את האובייקט</label>
+        <textarea id="textDesc" placeholder="לדוגמה: כיסא, שולחן, מכונית, בקבוק, כדור, עץ, מנורה"></textarea>
+      </div>
+      <div class="note">אין כאן AI — בלי תמונה אין פיקסלים לנתח. זו התאמת מילת-מפתח לתבנית קבועה מראש בלבד.</div>
+    </div>
+
+    <button class="btn" id="analyzeBtn" disabled>נתח ובנה מודל</button>
+    <div class="status" id="status"><span class="dot" id="statusDot"></span><span id="statusText">ממתין לקלט</span></div>
+    <div class="progressbar" id="progressBar"><div class="progressbar-fill" id="progressFill"></div></div>
+
+    <div class="divider"></div>
+
+    <div id="specsBlock" style="display:none">
+      <div class="section-title">מה נבנה</div>
+      <div class="spec-grid" id="specGrid"></div>
+    </div>
+
+    <div id="partsBlock" style="display:none">
+      <div class="section-title">חלקים בתבנית</div>
+      <div class="partslist" id="partsList"></div>
+    </div>
+
+    <div id="exportBlock" style="display:none">
+      <div class="section-title">הורדת המודל</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn secondary" id="exportGLB" style="flex:1; padding:10px 6px; font-size:13px;">GLB</button>
+        <button class="btn secondary" id="exportOBJ" style="flex:1; padding:10px 6px; font-size:13px;">OBJ</button>
+        <button class="btn secondary" id="exportSTL" style="flex:1; padding:10px 6px; font-size:13px;">STL</button>
+      </div>
+      <div class="sub-txt" id="exportStatus" style="margin-top:6px;">GLB לשימוש מהיר (עם צבע) · OBJ/STL לייבוא ל-Unity ותוכנות תלת-ממד אחרות</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="note">
+      <b>מצב תמונה:</b> מריץ רשת עצבית מאומנת אמיתית (Depth Anything V2) בדפדפן — תבליט אמיתי מהצילום + השלמת גב סימטרית ל-360°. רשת שנייה (הסרת רקע) יכולה לזהות את האובייקט ולהשמיט את הרקע/המסגרת סביבו — ניתן לכבות בתג ליד ההעלאה.<br><br>
+      <b>שני מתגים על התצוגה:</b> "סיבוב 360° אוטומטי" מסובב את המודל לבד; "סיבוב 360° בגרירה" קובע אם אפשר לסובב עם העכבר/אצבע — כשנועל, הזום עדיין עובד.<br><br>
+      <b>מצב משרטוט:</b> ללא רשת נוירונים בכלל — שיטה גיאומטרית קלאסית (חיתוך נפחי / visual hull): כל תא בנפח נבדק מול שלושת המבטים, ונשאר "מוצק" רק אם הוא בתוך הצללית בכל אחד מהם. זו הדרך הכי מדויקת בכלי הזה, כי יש מידע אמיתי משלושה כיוונים ומידות אמיתיות — לא ניחוש AI.<br><br>
+      <b>מצב תיאור:</b> נשלח ל-Claude (AI אמיתי, מובנה בכלי — בלי מפתח משלך) שמפרק את התיאור לצורות תלת-ממדיות. אם האינטרנט/הקריאה נכשלים, נופל אוטומטית לתבנית מקומית קבועה כגיבוי.<br><br>
+      <b>למה לא Depth Anything V2 במשרטוט/תיאור:</b> זו רשת שאומנה לנתח <b>צילומים</b>. הרצתה על שרטוט קווי (משרטוט הנדסי) או על טקסט תיתן תוצאה חסרת משמעות — זו לא "יותר AI", זו התאמה לא נכונה של כלי למשימה. במשרטוט, שיטת החיתוך הנפחי (visual hull) עם 3 מבטים ומידות אמיתיות היא בפועל מדויקת יותר.
+    </div>
+  </div>
+
+  <div class="stage">
+    <div id="canvas-holder"></div>
+    <div class="stage-empty" id="emptyState">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#4a8b8e" stroke-width="1.3"/><path d="M8 12h8M12 8v8" stroke="#4a8b8e" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <div class="t1">אין עדיין מודל להצגה</div>
+      <div class="t2">העלה תמונה להרצת רשת עומק אמיתית, או תאר אובייקט במילים</div>
+    </div>
+    <div class="stage-hud" id="hud" style="display:none">
+      <div class="line1" id="hudTitle">—</div>
+      <div id="hudSub">—</div>
+    </div>
+    <div class="hint" id="hint" style="display:none">גרור לסובב &middot; גלגלת לזום</div>
+    <div class="rotate-toggle" id="rotateToggle"><span id="rotateIcon">▶</span><span id="rotateLabel">סיבוב 360° אוטומטי</span></div>
+    <div class="rotate-toggle" id="dragRotateToggle" style="right:auto; left:18px;"><span id="dragRotateIcon">🔓</span><span id="dragRotateLabel">סיבוב 360° בגרירה</span></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/exporters/GLTFExporter.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/exporters/OBJExporter.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/exporters/STLExporter.js"></script>
+<script>
+THREE.OrbitControls = function ( object, domElement ) {
+  this.object = object;
+  this.domElement = domElement;
+  this.target = new THREE.Vector3();
+  this.enableDamping = true;
+  this.dampingFactor = 0.08;
+  this.minDistance = 1.0;
+  this.maxDistance = 40;
+  this.minPolarAngle = 0.1;
+  this.maxPolarAngle = Math.PI - 0.1;
+  this.enableRotate = true;
+
+  var scope = this;
+  var spherical = new THREE.Spherical();
+  var sphericalDelta = new THREE.Spherical(0,0,0);
+  var scale = 1;
+  var rotateStart = new THREE.Vector2(), rotateEnd = new THREE.Vector2(), rotateDelta = new THREE.Vector2();
+  var isDragging = false;
+
+  function onMouseDown(e){ isDragging = true; rotateStart.set(e.clientX, e.clientY); }
+  function onMouseMove(e){
+    if(!isDragging || !scope.enableRotate) return;
+    rotateEnd.set(e.clientX, e.clientY);
+    rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.006);
+    sphericalDelta.theta -= rotateDelta.x;
+    sphericalDelta.phi -= rotateDelta.y;
+    rotateStart.copy(rotateEnd);
+  }
+  function onMouseUp(){ isDragging = false; }
+  function onWheel(e){ e.preventDefault(); scale *= (1 + e.deltaY * 0.001); }
+  var touchStart = new THREE.Vector2();
+  var pinchStartDist = 0;
+  function touchDist(touches){
+    var dx = touches[0].clientX - touches[1].clientX;
+    var dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function onTouchStart(e){
+    if(e.touches.length===1){ isDragging = true; touchStart.set(e.touches[0].clientX, e.touches[0].clientY); }
+    else if(e.touches.length===2){ isDragging = false; pinchStartDist = touchDist(e.touches); }
+  }
+  function onTouchMove(e){
+    if(e.touches.length===1 && isDragging && scope.enableRotate){
+      e.preventDefault();
+      var t = e.touches[0];
+      rotateEnd.set(t.clientX, t.clientY);
+      rotateDelta.subVectors(rotateEnd, touchStart).multiplyScalar(0.006);
+      sphericalDelta.theta -= rotateDelta.x;
+      sphericalDelta.phi -= rotateDelta.y;
+      touchStart.copy(rotateEnd);
+    } else if(e.touches.length===2){
+      e.preventDefault();
+      var d = touchDist(e.touches);
+      if(pinchStartDist > 0){
+        var ratio = pinchStartDist / d;
+        scale *= ratio;
+      }
+      pinchStartDist = d;
+    }
+  }
+  function onTouchEnd(e){
+    isDragging = e.touches && e.touches.length === 1;
+    pinchStartDist = 0;
+  }
+
+  domElement.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+  domElement.addEventListener('wheel', onWheel, {passive:false});
+  domElement.addEventListener('touchstart', onTouchStart, {passive:false});
+  domElement.addEventListener('touchmove', onTouchMove, {passive:false});
+  domElement.addEventListener('touchend', onTouchEnd);
+  domElement.addEventListener('touchcancel', onTouchEnd);
+
+  this.update = function(){
+    var offset = new THREE.Vector3();
+    var position = scope.object.position;
+    offset.copy(position).sub(scope.target);
+    spherical.setFromVector3(offset);
+
+    if(scope.enableDamping){
+      spherical.theta += sphericalDelta.theta * scope.dampingFactor;
+      spherical.phi += sphericalDelta.phi * scope.dampingFactor;
+      sphericalDelta.theta *= (1 - scope.dampingFactor);
+      sphericalDelta.phi *= (1 - scope.dampingFactor);
+    } else {
+      spherical.theta += sphericalDelta.theta;
+      spherical.phi += sphericalDelta.phi;
+      sphericalDelta.set(0,0,0);
+    }
+
+    spherical.phi = Math.max(scope.minPolarAngle, Math.min(scope.maxPolarAngle, spherical.phi));
+    spherical.radius *= scale;
+    spherical.radius = Math.max(scope.minDistance, Math.min(scope.maxDistance, spherical.radius));
+    scale = 1 + (scale-1)*0.1;
+
+    offset.setFromSpherical(spherical);
+    position.copy(scope.target).add(offset);
+    scope.object.lookAt(scope.target);
+    return true;
+  };
+};
+</script>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.2.3';
+
+// This is a real, pretrained neural network. Weights are fetched once from a
+// public model CDN (like loading a webfont) and cached by the browser
+// (IndexedDB/Cache Storage) — no API key, no account, no server of ours,
+// no per-call network dependency after the first load.
+env.allowLocalModels = false;
+
+const MODEL_CANDIDATES = [
+  'onnx-community/depth-anything-v2-small',
+  'Xenova/depth-anything-small-hf'
+];
+
+// Real client-side foreground/background segmentation net (also no API key,
+// also cached after first download) — used to detect "what matters" in the
+// photo and drop the frame/background around it.
+const BG_MODEL_CANDIDATES = [
+  'briaai/RMBG-1.4',
+  'Xenova/modnet'
+];
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const specsBlock = document.getElementById('specsBlock');
+const specGrid = document.getElementById('specGrid');
+const partsBlock = document.getElementById('partsBlock');
+const partsList = document.getElementById('partsList');
+const emptyState = document.getElementById('emptyState');
+const hud = document.getElementById('hud');
+const hudTitle = document.getElementById('hudTitle');
+const hudSub = document.getElementById('hudSub');
+const hint = document.getElementById('hint');
+const tabImage = document.getElementById('tabImage');
+const tabText = document.getElementById('tabText');
+const tabBlueprint = document.getElementById('tabBlueprint');
+const imageInputBlock = document.getElementById('imageInputBlock');
+const textInputBlock = document.getElementById('textInputBlock');
+const blueprintInputBlock = document.getElementById('blueprintInputBlock');
+const textDesc = document.getElementById('textDesc');
+const backDropZone = document.getElementById('backDropZone');
+const backFileInput = document.getElementById('backFileInput');
+const backPreviewImg = document.getElementById('backPreviewImg');
+const rotateToggle = document.getElementById('rotateToggle');
+const rotateIcon = document.getElementById('rotateIcon');
+const rotateLabel = document.getElementById('rotateLabel');
+const dragRotateToggle = document.getElementById('dragRotateToggle');
+const dragRotateIcon = document.getElementById('dragRotateIcon');
+const dragRotateLabel = document.getElementById('dragRotateLabel');
+const bgRemoveToggle = document.getElementById('bgRemoveToggle');
+const brandLogoImg = document.getElementById('brandLogoImg');
+const bpDropZone = document.getElementById('bpDropZone');
+const bpFileInput = document.getElementById('bpFileInput');
+const bpCropWrap = document.getElementById('bpCropWrap');
+const bpCanvasHolder = document.getElementById('bpCanvasHolder');
+const bpCanvas = document.getElementById('bpCanvas');
+const bpBoxTop = document.getElementById('bpBoxTop');
+const bpBoxSide = document.getElementById('bpBoxSide');
+const bpBoxFront = document.getElementById('bpBoxFront');
+const bpLength = document.getElementById('bpLength');
+const bpWidth = document.getElementById('bpWidth');
+const bpHeight = document.getElementById('bpHeight');
+
+let base64ImageUrl = null;
+let backImageUrl = null;
+let mode = 'image';
+let autoRotate = false;
+let userInteracting = false;
+let bpImage = null; // loaded <img> of the uploaded blueprint
+
+function setAllTabsInactive(){
+  [tabImage, tabText, tabBlueprint].forEach(t=>t.classList.remove('active'));
+  [imageInputBlock, textInputBlock, blueprintInputBlock].forEach(b=>b.style.display='none');
+}
+tabImage.addEventListener('click', ()=>{ mode='image'; setAllTabsInactive(); tabImage.classList.add('active'); imageInputBlock.style.display='block'; analyzeBtn.textContent='נתח ובנה מודל'; refreshAnalyzeEnabled(); });
+tabText.addEventListener('click', ()=>{ mode='text'; setAllTabsInactive(); tabText.classList.add('active'); textInputBlock.style.display='block'; analyzeBtn.textContent='בנה מודל'; refreshAnalyzeEnabled(); });
+tabBlueprint.addEventListener('click', ()=>{ mode='blueprint'; setAllTabsInactive(); tabBlueprint.classList.add('active'); blueprintInputBlock.style.display='block'; analyzeBtn.textContent='בנה מודל תלת-ממדי'; refreshAnalyzeEnabled(); });
+textDesc.addEventListener('input', refreshAnalyzeEnabled);
+function refreshAnalyzeEnabled(){
+  if(mode==='image') analyzeBtn.disabled = !base64ImageUrl;
+  else if(mode==='blueprint') analyzeBtn.disabled = !bpImage;
+  else analyzeBtn.disabled = textDesc.value.trim().length < 2;
+}
+
+function setStatus(text, m){
+  statusText.textContent = text;
+  statusDot.className = 'dot' + (m==='spin'?' spin':m==='err'?' err':m==='ok'?' ok':'');
+}
+function setProgress(pct){
+  if(pct == null){ progressBar.classList.remove('show'); return; }
+  progressBar.classList.add('show');
+  progressFill.style.width = Math.max(0,Math.min(100,pct)) + '%';
+}
+
+['dragover','dragenter'].forEach(evt=>{ dropZone.addEventListener(evt, e=>{ e.preventDefault(); dropZone.classList.add('drag'); }); });
+['dragleave','drop'].forEach(evt=>{ dropZone.addEventListener(evt, e=>{ e.preventDefault(); dropZone.classList.remove('drag'); }); });
+dropZone.addEventListener('drop', e=>{ if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e=>{ if(e.target.files.length) handleFile(e.target.files[0]); });
+
+['dragover','dragenter'].forEach(evt=>{ backDropZone.addEventListener(evt, e=>{ e.preventDefault(); backDropZone.classList.add('drag'); }); });
+['dragleave','drop'].forEach(evt=>{ backDropZone.addEventListener(evt, e=>{ e.preventDefault(); backDropZone.classList.remove('drag'); }); });
+backDropZone.addEventListener('drop', e=>{ if(e.dataTransfer.files.length) handleBackFile(e.dataTransfer.files[0]); });
+backFileInput.addEventListener('change', e=>{ if(e.target.files.length) handleBackFile(e.target.files[0]); });
+
+function handleBackFile(file){
+  if(!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    backImageUrl = reader.result;
+    backPreviewImg.src = backImageUrl;
+    backPreviewImg.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ---------------- BLUEPRINT (multi-view) MODE — pure geometry, no neural net ----------------
+['dragover','dragenter'].forEach(evt=>{ bpDropZone.addEventListener(evt, e=>{ e.preventDefault(); bpDropZone.classList.add('drag'); }); });
+['dragleave','drop'].forEach(evt=>{ bpDropZone.addEventListener(evt, e=>{ e.preventDefault(); bpDropZone.classList.remove('drag'); }); });
+bpDropZone.addEventListener('drop', e=>{ if(e.dataTransfer.files.length) handleBlueprintFile(e.dataTransfer.files[0]); });
+bpFileInput.addEventListener('change', e=>{ if(e.target.files.length) handleBlueprintFile(e.target.files[0]); });
+
+function handleBlueprintFile(file){
+  if(!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      bpImage = img;
+      setupBlueprintCanvas(img);
+      refreshAnalyzeEnabled();
+      setStatus('מזהה את שלושת המבטים אוטומטית…', 'spin');
+      setTimeout(()=>{
+        const detected = autoDetectViews(img);
+        if(detected){
+          placeBoxFromOriginalRect(bpBoxSide, detected.side);
+          placeBoxFromOriginalRect(bpBoxTop, detected.top);
+          placeBoxFromOriginalRect(bpBoxFront, detected.front);
+          setStatus('זוהה אוטומטית — בונה מודל…', 'spin');
+          setTimeout(()=>{ try{ buildFromBlueprint(); }catch(e){ console.error(e); setStatus('הבנייה האוטומטית נכשלה — נסה לכוון ידנית וללחוץ "בנה מודל"', 'err'); } }, 30);
+        } else {
+          setStatus('הזיהוי האוטומטי לא הצליח — כוון את המסגרות ידנית ולחץ "בנה מודל"', 'err');
+        }
+      }, 30);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ---- automatic view-region detection (connected components on non-white pixels) ----
+function autoDetectViews(img){
+  const maxW = 480;
+  const scale = Math.min(1, maxW / img.width);
+  const w = Math.max(1, Math.round(img.width*scale)), h = Math.max(1, Math.round(img.height*scale));
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img,0,0,w,h);
+  const data = ctx.getImageData(0,0,w,h).data;
+  const bin = new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++){
+    const r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+    bin[i] = ((r+g+b)/3 < 235) ? 1 : 0;
+  }
+  const radius = Math.max(1, Math.round(Math.min(w,h)*0.01));
+  const dilated = new Uint8Array(w*h);
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      let v=0;
+      for(let dy=-radius; dy<=radius && !v; dy++){
+        const yy=y+dy; if(yy<0||yy>=h) continue;
+        for(let dx=-radius; dx<=radius; dx++){
+          const xx=x+dx; if(xx<0||xx>=w) continue;
+          if(bin[yy*w+xx]){ v=1; break; }
+        }
+      }
+      dilated[y*w+x]=v;
+    }
+  }
+
+  const labels = new Int32Array(w*h).fill(-1);
+  const comps = [];
+  const stack = [];
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const startIdx = y*w+x;
+      if(!dilated[startIdx] || labels[startIdx]!==-1) continue;
+      const label = comps.length;
+      let minX=x,maxX=x,minY=y,maxY=y,area=0;
+      stack.length = 0; stack.push(startIdx); labels[startIdx]=label;
+      while(stack.length){
+        const cur = stack.pop();
+        const cy = (cur/w)|0, cx = cur - cy*w;
+        area++;
+        if(cx<minX)minX=cx; if(cx>maxX)maxX=cx;
+        if(cy<minY)minY=cy; if(cy>maxY)maxY=cy;
+        if(cx>0 && dilated[cur-1] && labels[cur-1]===-1){ labels[cur-1]=label; stack.push(cur-1); }
+        if(cx<w-1 && dilated[cur+1] && labels[cur+1]===-1){ labels[cur+1]=label; stack.push(cur+1); }
+        if(cy>0 && dilated[cur-w] && labels[cur-w]===-1){ labels[cur-w]=label; stack.push(cur-w); }
+        if(cy<h-1 && dilated[cur+w] && labels[cur+w]===-1){ labels[cur+w]=label; stack.push(cur+w); }
+      }
+      comps.push({minX,minY,maxX,maxY,area});
+    }
+  }
+
+  const minArea = (w*h) * 0.004;
+  let filtered = comps.filter(cc=>cc.area >= minArea);
+  if(filtered.length < 3) return null;
+
+  function boxesClose(a,b,gap){
+    return !(a.maxX+gap < b.minX || b.maxX+gap < a.minX || a.maxY+gap < b.minY || b.maxY+gap < a.minY);
+  }
+  const gapPx = Math.round(Math.min(w,h)*0.02);
+  let mergedAny = true;
+  while(mergedAny){
+    mergedAny = false;
+    outer:
+    for(let a=0;a<filtered.length;a++){
+      for(let b=a+1;b<filtered.length;b++){
+        if(boxesClose(filtered[a], filtered[b], gapPx)){
+          const A=filtered[a], B=filtered[b];
+          filtered[a] = {
+            minX:Math.min(A.minX,B.minX), minY:Math.min(A.minY,B.minY),
+            maxX:Math.max(A.maxX,B.maxX), maxY:Math.max(A.maxY,B.maxY),
+            area:A.area+B.area
+          };
+          filtered.splice(b,1);
+          mergedAny = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  filtered.sort((a,b)=>b.area-a.area);
+  const top4 = filtered.slice(0,4);
+  if(top4.length < 3) return null;
+
+  const withAspect = top4.map(cc=>({
+    ...cc, aspect: (cc.maxX-cc.minX) / Math.max(1,(cc.maxY-cc.minY))
+  })).sort((a,b)=>b.aspect-a.aspect);
+
+  const sideC = withAspect[0];
+  const topC = withAspect[1];
+  const rest = withAspect.slice(2).sort((a,b)=>b.area-a.area);
+  const frontC = rest[0];
+  if(!sideC || !topC || !frontC) return null;
+
+  function toOriginal(cc){
+    return { x: cc.minX/scale, y: cc.minY/scale, w: (cc.maxX-cc.minX)/scale, h: (cc.maxY-cc.minY)/scale };
+  }
+  return { side: toOriginal(sideC), top: toOriginal(topC), front: toOriginal(frontC) };
+}
+
+function placeBoxFromOriginalRect(el, rect){
+  placeBox(el, rect.x*bpDisplayScale, rect.y*bpDisplayScale, rect.w*bpDisplayScale, rect.h*bpDisplayScale);
+}
+
+let bpDisplayScale = 1;
+function setupBlueprintCanvas(img){
+  bpCropWrap.style.display = 'block';
+  const displayW = bpCanvasHolder.clientWidth || 300;
+  const displayH = displayW * (img.height / img.width);
+  bpDisplayScale = displayW / img.width;
+  bpCanvas.width = displayW; bpCanvas.height = displayH;
+  bpCanvasHolder.style.height = displayH + 'px';
+  const ctx = bpCanvas.getContext('2d');
+  ctx.clearRect(0,0,displayW,displayH);
+  ctx.drawImage(img, 0, 0, displayW, displayH);
+
+  placeBox(bpBoxSide, displayW*0.03, displayH*0.04, displayW*0.55, displayH*0.34);
+  placeBox(bpBoxFront, displayW*0.62, displayH*0.04, displayW*0.32, displayH*0.34);
+  placeBox(bpBoxTop, displayW*0.03, displayH*0.42, displayW*0.55, displayH*0.34);
+}
+function placeBox(el, x, y, w, h){
+  el.style.left = x+'px'; el.style.top = y+'px'; el.style.width = w+'px'; el.style.height = h+'px';
+}
+
+function makeBoxInteractive(el){
+  const handle = el.querySelector('.bp-handle');
+  let dragging=false, resizing=false, startX=0, startY=0, startLeft=0, startTop=0, startW=0, startH=0;
+
+  el.addEventListener('pointerdown', (e)=>{
+    if(e.target === handle) return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    startLeft = el.offsetLeft; startTop = el.offsetTop;
+    el.setPointerCapture(e.pointerId);
+    e.stopPropagation();
+  });
+  el.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    const maxLeft = bpCanvasHolder.clientWidth - el.offsetWidth;
+    const maxTop = bpCanvasHolder.clientHeight - el.offsetHeight;
+    el.style.left = Math.max(0, Math.min(maxLeft, startLeft+dx)) + 'px';
+    el.style.top = Math.max(0, Math.min(maxTop, startTop+dy)) + 'px';
+  });
+  el.addEventListener('pointerup', ()=>{ dragging=false; });
+  el.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+  handle.addEventListener('pointerdown', (e)=>{
+    resizing = true;
+    startX = e.clientX; startY = e.clientY;
+    startW = el.offsetWidth; startH = el.offsetHeight;
+    handle.setPointerCapture(e.pointerId);
+    e.stopPropagation();
+  });
+  handle.addEventListener('pointermove', (e)=>{
+    if(!resizing) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    el.style.width = Math.max(20, startW+dx) + 'px';
+    el.style.height = Math.max(20, startH+dy) + 'px';
+    e.stopPropagation();
+  });
+  handle.addEventListener('pointerup', ()=>{ resizing=false; });
+  handle.addEventListener('pointercancel', ()=>{ resizing=false; });
+}
+[bpBoxTop, bpBoxSide, bpBoxFront].forEach(makeBoxInteractive);
+
+function getCropRect(el){
+  return {
+    x: el.offsetLeft / bpDisplayScale,
+    y: el.offsetTop / bpDisplayScale,
+    w: el.offsetWidth / bpDisplayScale,
+    h: el.offsetHeight / bpDisplayScale
+  };
+}
+
+function extractMask(rect, outW, outH){
+  const c = document.createElement('canvas');
+  c.width = outW; c.height = outH;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(bpImage, rect.x, rect.y, rect.w, rect.h, 0, 0, outW, outH);
+  const data = ctx.getImageData(0,0,outW,outH).data;
+  const mask = new Uint8Array(outW*outH);
+  let sumR=0,sumG=0,sumB=0,count=0;
+  for(let i=0;i<outW*outH;i++){
+    const r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+    const brightness = (r+g+b)/3;
+    const solid = brightness < 235;
+    mask[i] = solid ? 1 : 0;
+    if(solid){ sumR+=r; sumG+=g; sumB+=b; count++; }
+  }
+  return { mask, w:outW, h:outH, sumR, sumG, sumB, count };
+}
+
+function extractColorGrid(rect, outW, outH){
+  const c = document.createElement('canvas');
+  c.width = outW; c.height = outH;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(bpImage, rect.x, rect.y, rect.w, rect.h, 0, 0, outW, outH);
+  const data = ctx.getImageData(0,0,outW,outH).data;
+  const colors = new Array(outW*outH);
+  for(let i=0;i<outW*outH;i++){
+    colors[i] = [data[i*4], data[i*4+1], data[i*4+2]];
+  }
+  return colors;
+}
+
+function buildFromBlueprint(){
+  const lengthMM = Math.max(50, parseFloat(bpLength.value) || 4500);
+  const widthMM = Math.max(50, parseFloat(bpWidth.value) || 1850);
+  const heightMM = Math.max(50, parseFloat(bpHeight.value) || 1420);
+
+  const NZ = 56;
+  const gridScale = NZ / lengthMM;
+  const NX = Math.max(8, Math.min(36, Math.round(widthMM * gridScale)));
+  const NY = Math.max(8, Math.min(36, Math.round(heightMM * gridScale)));
+
+  const topRect = getCropRect(bpBoxTop);
+  const sideRect = getCropRect(bpBoxSide);
+  const frontRect = getCropRect(bpBoxFront);
+
+  const topM = extractMask(topRect, NZ, NX);     // horizontal=length(Z), vertical=width(X)
+  const sideM = extractMask(sideRect, NZ, NY);   // horizontal=length(Z), vertical=height(Y)
+  const frontM = extractMask(frontRect, NX, NY); // horizontal=width(X), vertical=height(Y)
+  const frontColors = extractColorGrid(frontRect, NX, NY); // real color per (width,height) cell
+
+  const solids = [];
+  for(let k=0;k<NZ;k++){
+    for(let i=0;i<NX;i++){
+      const topVal = topM.mask[i*NZ + k]; // row=i(width), col=k(length)
+      if(!topVal) continue;
+      for(let j=0;j<NY;j++){
+        const rowImgH = (NY-1-j);
+        const sideVal = sideM.mask[rowImgH*NZ + k];
+        if(!sideVal) continue;
+        const frontVal = frontM.mask[rowImgH*NX + i];
+        if(!frontVal) continue;
+        solids.push([i,j,k, rowImgH*NX + i]);
+      }
+    }
+  }
+
+  if(objGroup) scene.remove(objGroup);
+  objGroup = new THREE.Group();
+
+  if(solids.length === 0){
+    setStatus('לא נמצא נפח משותף — ודא שהמסגרות מכסות רק את גוף הרכב/האובייקט', 'err');
+    return;
+  }
+
+  const maxRealMM = Math.max(lengthMM, widthMM, heightMM);
+  const unitScale = 2.6 / maxRealMM;
+  const voxelMM = lengthMM / NZ;
+  const voxelSize = unitScale * voxelMM * 1.02;
+  const cellScene = unitScale * voxelMM;
+
+  // bucket voxels by (quantized) real sampled color, so the model reads as
+  // body-color / dark glass / dark tires instead of one flat block color
+  const BUCKET = 34;
+  const buckets = new Map();
+  solids.forEach(([i,j,k,colorIdx])=>{
+    const c = frontColors[colorIdx] || [150,150,150];
+    const qr = Math.round(c[0]/BUCKET)*BUCKET, qg = Math.round(c[1]/BUCKET)*BUCKET, qb = Math.round(c[2]/BUCKET)*BUCKET;
+    const key = qr+','+qg+','+qb;
+    if(!buckets.has(key)) buckets.set(key, { color:[qr,qg,qb], items:[] });
+    buckets.get(key).items.push([i,j,k]);
+  });
+
+  const geo = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
+  const dummy = new THREE.Object3D();
+  buckets.forEach(bucket=>{
+    const [r,g,b] = bucket.color;
+    const brightness = (r+g+b)/3;
+    const mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(r/255, g/255, b/255),
+      roughness: brightness < 70 ? 0.35 : 0.55,
+      metalness: brightness < 70 ? 0.5 : 0.2
+    });
+    const inst = new THREE.InstancedMesh(geo, mat, bucket.items.length);
+    bucket.items.forEach(([i,j,k], idx)=>{
+      dummy.position.set(
+        (i - NX/2 + 0.5) * cellScene,
+        (j + 0.5) * cellScene,
+        (k - NZ/2 + 0.5) * cellScene
+      );
+      dummy.updateMatrix();
+      inst.setMatrixAt(idx, dummy.matrix);
+    });
+    inst.instanceMatrix.needsUpdate = true;
+    inst.castShadow = true; inst.receiveShadow = true;
+    objGroup.add(inst);
+  });
+  scene.add(objGroup);
+
+  hudTitle.textContent = 'מודל וולומטרי · שחזור מ-3 מבטים';
+  hudSub.textContent = `${NX}×${NY}×${NZ} תאים · ${solids.length} מוצקים · ${buckets.size} גוונים`;
+  hud.style.display = 'block';
+  hint.style.display = 'block';
+  rotateToggle.style.display = 'flex';
+  dragRotateToggle.style.display = 'flex';
+  emptyState.style.display = 'none';
+
+  specsBlock.style.display = 'block';
+  specGrid.innerHTML = `
+    <div class="k">שיטה</div><div class="v">חיתוך נפחי (visual hull)</div>
+    <div class="k">מבטים</div><div class="v">עליון + צד + חזית</div>
+    <div class="k">מידות אמיתיות</div><div class="v">${lengthMM}&times;${widthMM}&times;${heightMM} מ״מ</div>
+    <div class="k">רזולוציית תאים</div><div class="v">${NX}&times;${NY}&times;${NZ}</div>
+  `;
+  partsBlock.style.display = 'none';
+
+  const dist = 4.2;
+  camera.position.set(dist*0.8, dist*0.55, dist);
+  controls.target.set(0, unitScale*heightMM*0.4, 0);
+  setStatus('הושלם · שחזור נפחי אוטומטי מ-3 מבטים', 'ok');
+  showExportButtons();
+}
+
+rotateToggle.addEventListener('click', ()=>{
+  autoRotate = !autoRotate;
+  rotateToggle.classList.toggle('active', autoRotate);
+  rotateIcon.textContent = autoRotate ? '⏸' : '▶';
+  rotateLabel.textContent = autoRotate ? 'עצור סיבוב' : 'סיבוב 360° אוטומטי';
+});
+
+dragRotateToggle.addEventListener('click', ()=>{
+  controls.enableRotate = !controls.enableRotate;
+  dragRotateToggle.classList.toggle('active', !controls.enableRotate);
+  dragRotateIcon.textContent = controls.enableRotate ? '🔓' : '🔒';
+  dragRotateLabel.textContent = controls.enableRotate ? 'סיבוב 360° בגרירה' : 'סיבוב נעול';
+});
+
+function handleFile(file){
+  if(!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    base64ImageUrl = reader.result;
+    previewImg.src = base64ImageUrl;
+    previewImg.style.display = 'block';
+    refreshAnalyzeEnabled();
+    setStatus('מוכן לניתוח', '');
+  };
+  reader.readAsDataURL(file);
+}
+
+analyzeBtn.addEventListener('click', analyze);
+
+// ---------------- REAL AI: client-side depth estimation ----------------
+let depthPipelinePromise = null;
+let backendUsed = 'wasm';
+
+async function tryLoadPipeline(device, progress_callback){
+  let lastErr;
+  for(const modelId of MODEL_CANDIDATES){
+    try{
+      const opts = { progress_callback };
+      if(device) opts.device = device;
+      return await pipeline('depth-estimation', modelId, opts);
+    }catch(e){ lastErr = e; console.warn('model load failed:', modelId, e); }
+  }
+  throw lastErr;
+}
+
+function progressCallback(p){
+  if(p && p.status === 'progress' && p.total){
+    const pct = Math.round((p.loaded/p.total)*100);
+    setStatus(`מוריד רשת עומק מאומנת… ${pct}%`, 'spin');
+    setProgress(pct);
+  } else if(p && p.status === 'progress'){
+    setStatus('מוריד רשת עומק מאומנת…', 'spin');
+  } else if(p && p.status === 'ready'){
+    setStatus('הרשת נטענה, מריצה הסקה…', 'spin');
+    setProgress(null);
+  }
+}
+
+async function getDepthPipeline(){
+  if(depthPipelinePromise) return depthPipelinePromise;
+  depthPipelinePromise = (async ()=>{
+    if('gpu' in navigator){
+      try{
+        const p = await tryLoadPipeline('webgpu', progressCallback);
+        backendUsed = 'webgpu';
+        return p;
+      }catch(e){ console.warn('WebGPU backend failed, falling back to WASM', e); }
+    }
+    const p = await tryLoadPipeline(undefined, progressCallback);
+    backendUsed = 'wasm';
+    return p;
+  })();
+  return depthPipelinePromise;
+}
+
+// ---------------- REAL AI: client-side background/frame removal ----------------
+let bgPipelinePromise = null;
+
+async function tryLoadSegPipeline(device, progress_callback){
+  let lastErr;
+  for(const modelId of BG_MODEL_CANDIDATES){
+    try{
+      const opts = { progress_callback };
+      if(device) opts.device = device;
+      return await pipeline('image-segmentation', modelId, opts);
+    }catch(e){ lastErr = e; console.warn('bg-removal model load failed:', modelId, e); }
+  }
+  throw lastErr;
+}
+
+function bgProgressCallback(p){
+  if(p && p.status === 'progress' && p.total){
+    const pct = Math.round((p.loaded/p.total)*100);
+    setStatus(`מורידה רשת הסרת-רקע… ${pct}%`, 'spin');
+    setProgress(pct);
+  } else if(p && p.status === 'progress'){
+    setStatus('מורידה רשת הסרת-רקע…', 'spin');
+  }
+}
+
+async function getBgPipeline(){
+  if(bgPipelinePromise) return bgPipelinePromise;
+  bgPipelinePromise = (async ()=>{
+    if('gpu' in navigator){
+      try{ return await tryLoadSegPipeline('webgpu', bgProgressCallback); }
+      catch(e){ console.warn('WebGPU bg pipeline failed, falling back to WASM', e); }
+    }
+    return await tryLoadSegPipeline(undefined, bgProgressCallback);
+  })();
+  return bgPipelinePromise;
+}
+
+function extractMaskRaw(output){
+  if(!output) return null;
+  if(Array.isArray(output)){
+    const withMask = output.find(o => o && o.mask);
+    return withMask ? withMask.mask : null;
+  }
+  if(output.mask) return output.mask;
+  if(output.data && output.width && output.height) return output; // already RawImage-like
+  return null;
+}
+
+// Returns a RawImage-like mask (grayscale, higher = foreground), or null if
+// segmentation isn't available/fails — callers must treat null as "skip
+// masking", never as an error that blocks the rest of the pipeline.
+async function computeForegroundMask(dataUrl){
+  try{
+    const segPipe = await getBgPipeline();
+    setStatus('מזהה מה חשוב בתמונה (מסירה רקע/מסגרת)…', 'spin');
+    const out = await segPipe(dataUrl);
+    setProgress(null);
+    return extractMaskRaw(out);
+  }catch(e){
+    console.warn('background removal unavailable, continuing with the full frame', e);
+    setProgress(null);
+    return null;
+  }
+}
+
+async function analyzeImage(){
+  setStatus('טוענת רשת עומק (Depth Anything V2)…', 'spin');
+  const depthPipe = await getDepthPipeline();
+
+  setStatus('מריצה הסקת עומק על התמונה הקדמית…', 'spin');
+  const frontOutput = await depthPipe(base64ImageUrl);
+  const frontDepth = frontOutput.depth;
+
+  let backDepth = null;
+  if(backImageUrl){
+    setStatus('מריצה הסקת עומק על התמונה האחורית…', 'spin');
+    const backOutput = await depthPipe(backImageUrl);
+    backDepth = backOutput.depth;
+  }
+
+  let frontMask = null, backMask = null;
+  if(bgRemoveToggle.checked){
+    frontMask = await computeForegroundMask(base64ImageUrl);
+    if(backImageUrl) backMask = await computeForegroundMask(backImageUrl);
+  }
+
+  await buildClosed360Model(base64ImageUrl, frontDepth, backImageUrl, backDepth, frontMask, backMask);
+  setProgress(null);
+  setStatus(`הושלם · ${backendUsed === 'webgpu' ? 'WebGPU' : 'WASM'} · AI מקומי`, 'ok');
+}
+
+function loadImageEl(url){
+  return new Promise((resolve)=>{ const img = new Image(); img.onload = ()=>resolve(img); img.src = url; });
+}
+
+function averageEdgeColor(img){
+  const c = document.createElement('canvas');
+  const size = 64;
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, size, size);
+  const data = ctx.getImageData(0,0,size,size).data;
+  const band = Math.max(2, Math.round(size*0.08));
+  let r=0,g=0,b=0,n=0;
+  for(let y=0;y<size;y++){
+    for(let x=0;x<size;x++){
+      const onEdge = x<band || x>=size-band || y<band || y>=size-band;
+      if(!onEdge) continue;
+      const i = (y*size+x)*4;
+      r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++;
+    }
+  }
+  r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
+  return `rgb(${r},${g},${b})`;
+}
+
+function buildPerimeterIndices(segX, segY){
+  const idx = (i,j)=> j*(segX+1)+i;
+  const loop = [];
+  for(let i=0;i<=segX;i++) loop.push(idx(i,0));                 // top row, left->right
+  for(let j=1;j<=segY;j++) loop.push(idx(segX,j));               // right col, top->bottom
+  for(let i=segX-1;i>=0;i--) loop.push(idx(i,segY));             // bottom row, right->left
+  for(let j=segY-1;j>=1;j--) loop.push(idx(0,j));                // left col, bottom->top
+  return loop;
+}
+
+function buildSkirtGeometry(frontPos, backPos, perimeter){
+  const positions = [];
+  const n = perimeter.length;
+  for(let k=0;k<n;k++){
+    const a = perimeter[k];
+    const b = perimeter[(k+1)%n];
+    const fa = new THREE.Vector3().fromBufferAttribute(frontPos, a);
+    const fb = new THREE.Vector3().fromBufferAttribute(frontPos, b);
+    const ba = new THREE.Vector3().fromBufferAttribute(backPos, a);
+    const bb = new THREE.Vector3().fromBufferAttribute(backPos, b);
+    // two triangles: (fa, fb, ba) and (fb, bb, ba)
+    positions.push(fa.x,fa.y,fa.z,  fb.x,fb.y,fb.z,  ba.x,ba.y,ba.z);
+    positions.push(fb.x,fb.y,fb.z,  bb.x,bb.y,bb.z,  ba.x,ba.y,ba.z);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+async function buildClosed360Model(frontUrl, frontRawDepth, backUrl, backRawDepth, frontMaskRaw, backMaskRaw){
+  const frontImg = await loadImageEl(frontUrl);
+  const backImg = backUrl ? await loadImageEl(backUrl) : null;
+
+  function makeSampler(rawDepth){
+    const { data, width: dw, height: dh, channels } = rawDepth;
+    return function(u, vTop){
+      const x = Math.min(dw-1, Math.max(0, Math.round(u*(dw-1))));
+      const y = Math.min(dh-1, Math.max(0, Math.round(vTop*(dh-1))));
+      return data[(y*dw+x)*channels] / 255;
+    };
+  }
+  const sampleFront = makeSampler(frontRawDepth);
+  const sampleBack = backRawDepth ? makeSampler(backRawDepth) : null;
+  const sampleFrontMask = frontMaskRaw ? makeSampler(frontMaskRaw) : null;
+  const sampleBackMask = backMaskRaw ? makeSampler(backMaskRaw) : null;
+
+  // Draws the photo to a canvas and punches its alpha channel out using the
+  // foreground mask, so the background/frame becomes transparent instead of
+  // being carried onto the model as a flat rectangle of photo.
+  function buildMaskedTexture(img, maskSample){
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const imgData = ctx.getImageData(0, 0, c.width, c.height);
+    const d = imgData.data;
+    const wm1 = Math.max(1, c.width - 1), hm1 = Math.max(1, c.height - 1);
+    for(let y=0;y<c.height;y++){
+      const vTop = y / hm1;
+      for(let x=0;x<c.width;x++){
+        const u = x / wm1;
+        const a = maskSample(u, vTop);
+        d[(y*c.width+x)*4+3] = Math.round(Math.max(0, Math.min(1, a)) * 255);
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    if('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  if(objGroup) scene.remove(objGroup);
+  objGroup = new THREE.Group();
+
+  const aspect = frontImg.width / frontImg.height;
+  const maxDim = 2.6;
+  let planeW, planeH;
+  if(aspect >= 1){ planeW = maxDim; planeH = maxDim/aspect; }
+  else { planeH = maxDim; planeW = maxDim*aspect; }
+
+  const segX = 90;
+  const segY = Math.max(16, Math.round(90/aspect));
+  const depthScale = maxDim * 0.28;
+
+  // ---- FRONT surface (always real, photo-based) ----
+  const frontGeo = new THREE.PlaneGeometry(planeW, planeH, segX, segY);
+  const fPos = frontGeo.attributes.position, fUv = frontGeo.attributes.uv;
+  for(let i=0;i<fPos.count;i++){
+    const u = fUv.getX(i), vTop = 1 - fUv.getY(i);
+    let dVal = sampleFront(u, vTop);
+    if(sampleFrontMask) dVal *= sampleFrontMask(u, vTop);
+    fPos.setZ(i, dVal * depthScale);
+  }
+  frontGeo.computeVertexNormals();
+  const frontTex = sampleFrontMask ? buildMaskedTexture(frontImg, sampleFrontMask) : new THREE.TextureLoader().load(frontUrl);
+  if('colorSpace' in frontTex) frontTex.colorSpace = THREE.SRGBColorSpace;
+  const frontMat = new THREE.MeshStandardMaterial({
+    map: frontTex, side: THREE.DoubleSide, roughness: 0.85, metalness: 0.04,
+    transparent: !!sampleFrontMask, alphaTest: sampleFrontMask ? 0.35 : 0
+  });
+  const frontMesh = new THREE.Mesh(frontGeo, frontMat);
+  frontMesh.castShadow = true; frontMesh.receiveShadow = true;
+  objGroup.add(frontMesh);
+
+  // ---- BACK surface (real if a back photo was given, otherwise a mirrored estimate) ----
+  const backGeo = new THREE.PlaneGeometry(planeW, planeH, segX, segY);
+  const bPos = backGeo.attributes.position, bUv = backGeo.attributes.uv;
+  for(let i=0;i<bPos.count;i++){
+    const u = bUv.getX(i), vTop = 1 - bUv.getY(i);
+    let depthVal, maskVal = 1;
+    if(sampleBack){
+      depthVal = sampleBack(1 - u, vTop); // mirror U: walking behind the object flips left/right
+      if(sampleBackMask) maskVal = sampleBackMask(1 - u, vTop);
+    } else {
+      depthVal = sampleFront(u, vTop); // symmetric mirror of the front
+      if(sampleFrontMask) maskVal = sampleFrontMask(u, vTop);
+    }
+    bPos.setZ(i, -depthVal * maskVal * depthScale);
+  }
+  backGeo.computeVertexNormals();
+
+  let backMat;
+  if(backImg){
+    const backTex = sampleBackMask ? buildMaskedTexture(backImg, (u,v)=>sampleBackMask(1-u,v)) : new THREE.TextureLoader().load(backUrl);
+    if('colorSpace' in backTex) backTex.colorSpace = THREE.SRGBColorSpace;
+    if(!sampleBackMask){
+      backTex.wrapS = THREE.RepeatWrapping;
+      backTex.repeat.x = -1; backTex.offset.x = 1; // mirror horizontally to match orientation
+    }
+    backMat = new THREE.MeshStandardMaterial({
+      map: backTex, side: THREE.DoubleSide, roughness: 0.85, metalness: 0.04,
+      transparent: !!sampleBackMask, alphaTest: sampleBackMask ? 0.35 : 0
+    });
+  } else {
+    const estColor = averageEdgeColor(frontImg);
+    backMat = new THREE.MeshStandardMaterial({ color: estColor, side: THREE.DoubleSide, roughness: 0.92, metalness: 0.03 });
+  }
+  const backMesh = new THREE.Mesh(backGeo, backMat);
+  backMesh.castShadow = true; backMesh.receiveShadow = true;
+  objGroup.add(backMesh);
+
+  // ---- SKIRT closing the volume so it reads as solid from any angle ----
+  const perimeter = buildPerimeterIndices(segX, segY);
+  const skirtGeo = buildSkirtGeometry(fPos, bPos, perimeter);
+  const skirtColor = backImg ? averageEdgeColor(frontImg) : averageEdgeColor(frontImg);
+  const skirtMat = new THREE.MeshStandardMaterial({ color: skirtColor, side: THREE.DoubleSide, roughness: 0.95, metalness: 0.02 });
+  const skirtMesh = new THREE.Mesh(skirtGeo, skirtMat);
+  skirtMesh.castShadow = true; skirtMesh.receiveShadow = true;
+  objGroup.add(skirtMesh);
+
+  objGroup.position.y = planeH/2 + 0.02;
+  scene.add(objGroup);
+
+  hudTitle.textContent = backImg ? 'מודל 360° · שני צילומי עומק אמיתיים' : 'מודל 360° · תבליט קדמי אמיתי + גב משוער';
+  hudSub.textContent = `${backendUsed === 'webgpu' ? 'WebGPU' : 'WASM'} · ${segX}×${segY} קודקודים לכל צד`;
+  hud.style.display = 'block';
+  hint.style.display = 'block';
+  rotateToggle.style.display = 'flex';
+  dragRotateToggle.style.display = 'flex';
+  emptyState.style.display = 'none';
+
+  specsBlock.style.display = 'block';
+  specGrid.innerHTML = `
+    <div class="k">מודל עומק</div><div class="v">Depth Anything V2 (Small)</div>
+    <div class="k">מנוע הרצה</div><div class="v">${backendUsed === 'webgpu' ? 'WebGPU' : 'WASM'} (בדפדפן)</div>
+    <div class="k">צד קדמי</div><div class="v">עומק אמיתי מהתמונה</div>
+    <div class="k">צד אחורי</div><div class="v">${backImg ? 'עומק אמיתי (תמונה שנייה)' : 'שיקוף משוער'}</div>
+    <div class="k">הסרת רקע</div><div class="v">${sampleFrontMask ? 'פעיל (AI)' : 'כבוי'}</div>
+  `;
+  partsBlock.style.display = 'none';
+
+  const dist = 4.2;
+  camera.position.set(dist*0.75, dist*0.5, dist);
+  controls.target.set(0, planeH/2, 0);
+  showExportButtons();
+}
+
+// ---------------- NON-AI FALLBACK: fixed keyword presets for text mode ----------------
+const PRESETS = {
+  'כיסא': { label:'כיסא', category:'רהיט', boundingSize:{width:0.5,height:0.9,depth:0.5}, parts:[
+    {shape:'roundedBox', size:{x:0.46,y:0.06,z:0.46}, position:{x:0,y:0.46,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#8a5a3a', metalness:0.05, roughness:0.7},
+    {shape:'roundedBox', size:{x:0.46,y:0.5,z:0.06}, position:{x:0,y:0.72,z:-0.22}, rotation:{x:0,y:0,z:0}, colorHex:'#8a5a3a', metalness:0.05, roughness:0.7},
+    {shape:'cylinder', size:{x:0.04,y:0.46,z:0.04}, position:{x:0.19,y:0.23,z:0.19}, rotation:{x:0,y:0,z:0}, colorHex:'#5a3d26', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.04,y:0.46,z:0.04}, position:{x:-0.19,y:0.23,z:0.19}, rotation:{x:0,y:0,z:0}, colorHex:'#5a3d26', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.04,y:0.46,z:0.04}, position:{x:0.19,y:0.23,z:-0.19}, rotation:{x:0,y:0,z:0}, colorHex:'#5a3d26', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.04,y:0.46,z:0.04}, position:{x:-0.19,y:0.23,z:-0.19}, rotation:{x:0,y:0,z:0}, colorHex:'#5a3d26', metalness:0.1, roughness:0.6}
+  ]},
+  'שולחן': { label:'שולחן', category:'רהיט', boundingSize:{width:1.2,height:0.75,depth:0.7}, parts:[
+    {shape:'roundedBox', size:{x:1.2,y:0.05,z:0.7}, position:{x:0,y:0.72,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#7a5230', metalness:0.05, roughness:0.65},
+    {shape:'cylinder', size:{x:0.06,y:0.7,z:0.06}, position:{x:0.55,y:0.35,z:0.3}, rotation:{x:0,y:0,z:0}, colorHex:'#4a3320', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.06,y:0.7,z:0.06}, position:{x:-0.55,y:0.35,z:0.3}, rotation:{x:0,y:0,z:0}, colorHex:'#4a3320', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.06,y:0.7,z:0.06}, position:{x:0.55,y:0.35,z:-0.3}, rotation:{x:0,y:0,z:0}, colorHex:'#4a3320', metalness:0.1, roughness:0.6},
+    {shape:'cylinder', size:{x:0.06,y:0.7,z:0.06}, position:{x:-0.55,y:0.35,z:-0.3}, rotation:{x:0,y:0,z:0}, colorHex:'#4a3320', metalness:0.1, roughness:0.6}
+  ]},
+  'מכונית': { label:'מכונית', category:'רכב', boundingSize:{width:1.8,height:0.7,depth:0.9}, parts:[
+    {shape:'roundedBox', size:{x:1.8,y:0.35,z:0.85}, position:{x:0,y:0.35,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#c0392b', metalness:0.6, roughness:0.3},
+    {shape:'roundedBox', size:{x:0.9,y:0.3,z:0.75}, position:{x:0,y:0.65,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#dfe6e9', metalness:0.3, roughness:0.2},
+    {shape:'cylinder', size:{x:0.3,y:0.15,z:0.3}, position:{x:0.6,y:0.15,z:0.45}, rotation:{x:90,y:0,z:0}, colorHex:'#1a1a1a', metalness:0.2, roughness:0.7},
+    {shape:'cylinder', size:{x:0.3,y:0.15,z:0.3}, position:{x:-0.6,y:0.15,z:0.45}, rotation:{x:90,y:0,z:0}, colorHex:'#1a1a1a', metalness:0.2, roughness:0.7},
+    {shape:'cylinder', size:{x:0.3,y:0.15,z:0.3}, position:{x:0.6,y:0.15,z:-0.45}, rotation:{x:90,y:0,z:0}, colorHex:'#1a1a1a', metalness:0.2, roughness:0.7},
+    {shape:'cylinder', size:{x:0.3,y:0.15,z:0.3}, position:{x:-0.6,y:0.15,z:-0.45}, rotation:{x:90,y:0,z:0}, colorHex:'#1a1a1a', metalness:0.2, roughness:0.7}
+  ]},
+  'בקבוק': { label:'בקבוק', category:'כלי', boundingSize:{width:0.08,height:0.28,depth:0.08}, parts:[
+    {shape:'cylinder', size:{x:0.08,y:0.2,z:0.08}, position:{x:0,y:0.1,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#2f8f5b', metalness:0.1, roughness:0.15},
+    {shape:'cylinder', size:{x:0.035,y:0.07,z:0.035}, position:{x:0,y:0.235,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#2f8f5b', metalness:0.1, roughness:0.15},
+    {shape:'cylinder', size:{x:0.04,y:0.02,z:0.04}, position:{x:0,y:0.28,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#c8a951', metalness:0.5, roughness:0.4}
+  ]},
+  'כדור': { label:'כדור', category:'אחר', boundingSize:{width:0.3,height:0.3,depth:0.3}, parts:[
+    {shape:'sphere', size:{x:0.3,y:0.3,z:0.3}, position:{x:0,y:0.15,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#e8a33d', metalness:0.1, roughness:0.5}
+  ]},
+  'עץ': { label:'עץ', category:'אחר', boundingSize:{width:0.8,height:1.6,depth:0.8}, parts:[
+    {shape:'cylinder', size:{x:0.12,y:0.7,z:0.12}, position:{x:0,y:0.35,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#6b4226', metalness:0.05, roughness:0.85},
+    {shape:'sphere', size:{x:0.8,y:0.8,z:0.8}, position:{x:0,y:1.05,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#3f7a3f', metalness:0.02, roughness:0.9}
+  ]},
+  'מנורה': { label:'מנורה', category:'אחר', boundingSize:{width:0.35,height:1.3,depth:0.35}, parts:[
+    {shape:'cylinder', size:{x:0.3,y:0.04,z:0.3}, position:{x:0,y:0.02,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#2b2b2b', metalness:0.6, roughness:0.35},
+    {shape:'cylinder', size:{x:0.03,y:1.0,z:0.03}, position:{x:0,y:0.52,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#2b2b2b', metalness:0.6, roughness:0.35},
+    {shape:'cone', size:{x:0.35,y:0.28,z:0.35}, position:{x:0,y:1.18,z:0}, rotation:{x:180,y:0,z:0}, colorHex:'#e8d9b0', metalness:0.05, roughness:0.6}
+  ]}
+};
+const GENERIC_PRESET = { label:'קובייה גנרית (לא זוהתה תבנית)', category:'אחר', boundingSize:{width:0.5,height:0.5,depth:0.5}, parts:[
+  {shape:'roundedBox', size:{x:0.5,y:0.5,z:0.5}, position:{x:0,y:0.25,z:0}, rotation:{x:0,y:0,z:0}, colorHex:'#8b939a', metalness:0.1, roughness:0.6}
+]};
+function matchPreset(text){
+  for(const key in PRESETS){ if(text.includes(key)) return PRESETS[key]; }
+  if(text.includes('רכב') || text.includes('אוטו')) return PRESETS['מכונית'];
+  if(text.includes('קופסה') || text.includes('קוביה') || text.includes('קובייה')) return GENERIC_PRESET;
+  return null;
+}
+
+function analyzeTextPreset(){
+  const text = textDesc.value.trim();
+  const preset = matchPreset(text) || GENERIC_PRESET;
+  const isGeneric = preset === GENERIC_PRESET;
+  setStatus(isGeneric ? 'לא נמצאה תבנית תואמת — קובייה גנרית' : 'תבנית מילון מקומית (גיבוי — לא AI)', isGeneric ? 'err' : '');
+  renderPresetSpecUI(preset, false);
+  buildPrimitiveModel(preset);
+}
+
+const TEXT_SCHEMA_INSTRUCTIONS = `נתח את תיאור האובייקט הבא ופרק אותו לצורות גיאומטריות תלת-ממדיות בסיסיות שמרכיבות יחד ייצוג סטיליזטי סביר שלו.
+החזר אך ורק JSON תקני (ללא טקסט נוסף, ללא backticks, ללא הערות) בפורמט המדויק:
+{
+  "label": "שם קצר בעברית של האובייקט",
+  "category": "מילה אחת המתארת את סוג האובייקט",
+  "boundingSize": {"width": number, "height": number, "depth": number},
+  "parts": [
+    { "shape": "roundedBox"|"box"|"cylinder"|"sphere"|"cone",
+      "size": {"x": number, "y": number, "z": number},
+      "position": {"x": number, "y": number, "z": number},
+      "rotation": {"x": number, "y": number, "z": number},
+      "colorHex": "#rrggbb", "metalness": number 0-1, "roughness": number 0-1 }
+  ]
+}
+position הוא מרכז החלק, Y אנכי (0=רצפה). בין 4 ל-16 חלקים. rotation במעלות.
+חשוב לגבי חלקות: לכל חלק שטוח/מלבני (מושב, גב, משטח שולחן, מרכב, פאנל) השתמש ב-"roundedBox" ולא ב-"box" הרגיל — הוא נותן קצוות מעוגלים וגימור חלק במקום קוביה גולמית. השתמש ב-"box" חד רק כשמדובר בפועל בחפץ מחודד/תעשייתי שאמור להיראות קשיח. אל תוסיף טקסט מחוץ ל-JSON.`;
+
+async function analyzeTextAI(){
+  const text = textDesc.value.trim();
+  setStatus('שולחת ל-AI לניתוח...', 'spin');
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: [{ type:"text", text: "האובייקט המתואר: " + text + "\n\n" + TEXT_SCHEMA_INSTRUCTIONS }] }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).map(b=>b.text||'').join('');
+    const clean = textBlock.replace(/```json|```/g,'').trim();
+    const spec = JSON.parse(clean);
+    if(!spec.parts || !spec.parts.length) throw new Error('no parts');
+    renderPresetSpecUI(spec, true);
+    buildPrimitiveModel(spec);
+    setStatus('נותח בהצלחה על ידי AI', 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus('קריאת ה-AI נכשלה — נופל לתבנית מקומית כגיבוי', 'err');
+    analyzeTextPreset();
+  }
+}
+
+function renderPresetSpecUI(spec, isAI){
+  specsBlock.style.display = 'block';
+  specGrid.innerHTML = `
+    <div class="k">${isAI?'זוהה':'תבנית'}</div><div class="v">${spec.label||'—'}</div>
+    <div class="k">קטגוריה</div><div class="v">${spec.category||'—'}</div>
+    <div class="k">חלקים</div><div class="v">${spec.parts.length}</div>
+    <div class="k">מקור</div><div class="v">${isAI ? 'AI (Claude)' : 'מילון מקומי (גיבוי)'}</div>
+  `;
+  partsBlock.style.display = 'block';
+  partsList.innerHTML = '';
+  spec.parts.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'partrow';
+    row.innerHTML = `<span class="swab" style="background:${p.colorHex||'#888'}"></span><span>${i+1}. ${shapeNameHe(p.shape)}</span>`;
+    partsList.appendChild(row);
+  });
+  hudTitle.textContent = spec.label || 'אובייקט';
+  hudSub.textContent = 'תבנית קבועה · ' + spec.parts.length + ' חלקים';
+  hud.style.display = 'block';
+  hint.style.display = 'block';
+  emptyState.style.display = 'none';
+}
+function shapeNameHe(s){
+  return {box:'קובייה', cylinder:'גליל', sphere:'כדור', cone:'חרוט'}[s] || s;
+}
+
+async function analyze(){
+  analyzeBtn.disabled = true;
+  setProgress(null);
+  try{
+    if(mode === 'image'){
+      await analyzeImage();
+    } else if(mode === 'blueprint'){
+      buildFromBlueprint();
+    } else {
+      await analyzeTextAI();
+    }
+  }catch(err){
+    console.error(err);
+    setStatus('הניתוח נכשל — ראה קונסולה (F12)', 'err');
+    setProgress(null);
+  }finally{
+    refreshAnalyzeEnabled();
+  }
+}
+
+// ---------------- EXPORT (GLB / OBJ / STL) ----------------
+const exportBlock = document.getElementById('exportBlock');
+const exportStatus = document.getElementById('exportStatus');
+const exportGLBBtn = document.getElementById('exportGLB');
+const exportOBJBtn = document.getElementById('exportOBJ');
+const exportSTLBtn = document.getElementById('exportSTL');
+
+function showExportButtons(){ exportBlock.style.display = 'block'; }
+
+function buildMergedExportMesh(){
+  if(!objGroup) return null;
+  const geometries = [];
+  objGroup.children.forEach(child=>{
+    if(child.isInstancedMesh){
+      const count = child.count;
+      const color = child.material.color;
+      for(let idx=0; idx<count; idx++){
+        const m = new THREE.Matrix4();
+        child.getMatrixAt(idx, m);
+        const g = child.geometry.clone();
+        g.applyMatrix4(m);
+        const n = g.attributes.position.count;
+        const colorArr = new Float32Array(n*3);
+        for(let vi=0; vi<n; vi++){ colorArr[vi*3]=color.r; colorArr[vi*3+1]=color.g; colorArr[vi*3+2]=color.b; }
+        g.setAttribute('color', new THREE.Float32BufferAttribute(colorArr,3));
+        if(!g.index){ /* keep as-is */ }
+        geometries.push(g);
+      }
+    } else if(child.isMesh){
+      const g = child.geometry.clone();
+      g.applyMatrix4(child.matrix);
+      if(!g.attributes.uv){ g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2), 2)); }
+      if(!g.attributes.color){
+        const color = (child.material && child.material.color) ? child.material.color : new THREE.Color(0xffffff);
+        const n = g.attributes.position.count;
+        const colorArr = new Float32Array(n*3);
+        for(let vi=0; vi<n; vi++){ colorArr[vi*3]=color.r; colorArr[vi*3+1]=color.g; colorArr[vi*3+2]=color.b; }
+        g.setAttribute('color', new THREE.Float32BufferAttribute(colorArr,3));
+      }
+      geometries.push(g);
+    }
+  });
+  if(!geometries.length) return null;
+
+  let merged;
+  try{
+    merged = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries, false);
+  }catch(e){
+    console.error('merge failed', e);
+    merged = geometries[0];
+  }
+  merged.translate(objGroup.position.x, objGroup.position.y, objGroup.position.z);
+  merged.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness:0.6, metalness:0.15 });
+  return new THREE.Mesh(merged, mat);
+}
+
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body ? document.body.appendChild(a) : document.documentElement.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+exportGLBBtn.addEventListener('click', ()=>{
+  exportStatus.textContent = 'מכין קובץ GLB…';
+  setTimeout(()=>{
+    const mesh = buildMergedExportMesh();
+    if(!mesh){ exportStatus.textContent = 'אין מודל לייצוא'; return; }
+    try{
+      new THREE.GLTFExporter().parse(mesh, (result)=>{
+        const blob = new Blob([result], { type:'application/octet-stream' });
+        downloadBlob(blob, 'model.glb');
+        exportStatus.textContent = 'GLB הורד בהצלחה';
+      }, { binary:true });
+    }catch(err){ console.error(err); exportStatus.textContent = 'ייצוא GLB נכשל'; }
+  }, 20);
+});
+exportOBJBtn.addEventListener('click', ()=>{
+  exportStatus.textContent = 'מכין קובץ OBJ…';
+  setTimeout(()=>{
+    const mesh = buildMergedExportMesh();
+    if(!mesh){ exportStatus.textContent = 'אין מודל לייצוא'; return; }
+    try{
+      const objString = new THREE.OBJExporter().parse(mesh);
+      downloadBlob(new Blob([objString], {type:'text/plain'}), 'model.obj');
+      exportStatus.textContent = 'OBJ הורד בהצלחה (ללא צבע — OBJ לא תומך בצבעי קודקוד)';
+    }catch(err){ console.error(err); exportStatus.textContent = 'ייצוא OBJ נכשל'; }
+  }, 20);
+});
+exportSTLBtn.addEventListener('click', ()=>{
+  exportStatus.textContent = 'מכין קובץ STL…';
+  setTimeout(()=>{
+    const mesh = buildMergedExportMesh();
+    if(!mesh){ exportStatus.textContent = 'אין מודל לייצוא'; return; }
+    try{
+      const stlString = new THREE.STLExporter().parse(mesh);
+      downloadBlob(new Blob([stlString], {type:'text/plain'}), 'model.stl');
+      exportStatus.textContent = 'STL הורד בהצלחה (גיאומטריה בלבד, ללא צבע)';
+    }catch(err){ console.error(err); exportStatus.textContent = 'ייצוא STL נכשל'; }
+  }, 20);
+});
+
+// ---------------- THREE.JS SCENE ----------------
+let scene, camera, renderer, controls, objGroup;
+function initScene(){
+  const holder = document.getElementById('canvas-holder');
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x101315, 16, 40);
+
+  camera = new THREE.PerspectiveCamera(38, holder.clientWidth/holder.clientHeight, 0.05, 200);
+  camera.position.set(4.5, 3, 5.5);
+
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(holder.clientWidth, holder.clientHeight);
+  renderer.shadowMap.enabled = true;
+  holder.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0,0.6,0);
+
+  const pauseRotate = ()=>{ userInteracting = true; };
+  const resumeRotate = ()=>{ userInteracting = false; };
+  renderer.domElement.addEventListener('mousedown', pauseRotate);
+  window.addEventListener('mouseup', resumeRotate);
+  renderer.domElement.addEventListener('touchstart', pauseRotate, {passive:true});
+  renderer.domElement.addEventListener('touchend', resumeRotate);
+
+  const hemi = new THREE.HemisphereLight(0x9fb8c8, 0x1a1a1a, 0.9);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(0xfff2df, 1.15);
+  key.position.set(6,9,4);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024,1024);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x4a8b8e, 0.5);
+  rim.position.set(-6,4,-6);
+  scene.add(rim);
+
+  const groundGeo = new THREE.CircleGeometry(24, 48);
+  const groundMat = new THREE.MeshStandardMaterial({ color:0x1a1e21, roughness:0.9, metalness:0.05 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const grid = new THREE.GridHelper(24, 24, 0x2c4f51, 0x22282b);
+  grid.position.y = 0.001;
+  scene.add(grid);
+
+  window.addEventListener('resize', onResize);
+  animate();
+}
+function onResize(){
+  const holder = document.getElementById('canvas-holder');
+  camera.aspect = holder.clientWidth/holder.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(holder.clientWidth, holder.clientHeight);
+}
+function animate(){
+  requestAnimationFrame(animate);
+  if(autoRotate && !userInteracting && objGroup){ objGroup.rotation.y += 0.006; }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// Rounded/chamfered box — real curved-edge geometry (extrude a rounded-rect
+// profile with a bevel), not a flat cube. This is what makes text-mode parts
+// look like smooth, finished objects instead of raw blocks.
+function roundedBoxGeometry(width, height, depth, radius){
+  const w = Math.max(width, 0.001), h = Math.max(height, 0.001), d = Math.max(depth, 0.001);
+  const r = Math.max(0.001, Math.min(radius, w/2*0.9, h/2*0.9, d/2*0.9));
+  const shape = new THREE.Shape();
+  const x = -w/2, y = -h/2;
+  shape.moveTo(x, y+r);
+  shape.lineTo(x, y+h-r);
+  shape.quadraticCurveTo(x, y+h, x+r, y+h);
+  shape.lineTo(x+w-r, y+h);
+  shape.quadraticCurveTo(x+w, y+h, x+w, y+h-r);
+  shape.lineTo(x+w, y+r);
+  shape.quadraticCurveTo(x+w, y, x+w-r, y);
+  shape.lineTo(x+r, y);
+  shape.quadraticCurveTo(x, y, x, y+r);
+  const bevelSize = Math.min(r*0.7, d/2*0.85);
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: Math.max(d - bevelSize*2, 0.001),
+    bevelEnabled: true,
+    bevelThickness: bevelSize,
+    bevelSize: bevelSize,
+    bevelSegments: 5,
+    curveSegments: 8
+  });
+  geo.center();
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function makeGeometry(part){
+  const s = part.size || {x:1,y:1,z:1};
+  switch(part.shape){
+    case 'cylinder': return new THREE.CylinderGeometry(s.x/2, s.x/2, s.y, 36);
+    case 'sphere': return new THREE.SphereGeometry(s.x/2, 30, 22);
+    case 'cone': return new THREE.ConeGeometry(s.x/2, s.y, 32);
+    case 'roundedBox': return roundedBoxGeometry(s.x||1, s.y||1, s.z||1, Math.min(s.x||1, s.y||1, s.z||1) * 0.2);
+    case 'box':
+    default: return new THREE.BoxGeometry(s.x||1, s.y||1, s.z||1);
+  }
+}
+
+function buildPrimitiveModel(spec){
+  if(objGroup) scene.remove(objGroup);
+  objGroup = new THREE.Group();
+
+  const bb = spec.boundingSize || {width:0.5,height:0.5,depth:0.5};
+  const maxDim = Math.max(bb.width||1, bb.height||1, bb.depth||1, 0.1);
+  const scaleFactor = 2.6 / maxDim;
+
+  spec.parts.forEach(part=>{
+    const geo = makeGeometry(part);
+    const mat = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(part.colorHex || '#999999'),
+      metalness: typeof part.metalness === 'number' ? part.metalness : 0.2,
+      roughness: typeof part.roughness === 'number' ? part.roughness : 0.6,
+      clearcoat: (part.metalness||0) > 0.5 ? 0.4 : 0,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    const pos = part.position || {x:0,y:0,z:0};
+    mesh.position.set((pos.x||0)*scaleFactor, (pos.y||0)*scaleFactor, (pos.z||0)*scaleFactor);
+    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    const rot = part.rotation || {x:0,y:0,z:0};
+    mesh.rotation.set((rot.x||0)*Math.PI/180, (rot.y||0)*Math.PI/180, (rot.z||0)*Math.PI/180);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    objGroup.add(mesh);
+  });
+
+  objGroup.rotation.y = Math.PI*0.15;
+  scene.add(objGroup);
+
+  const dist = 4 + maxDim*scaleFactor*0.9;
+  camera.position.set(dist*0.85, dist*0.55, dist);
+  controls.target.set(0, 1.2*scaleFactor, 0);
+  rotateToggle.style.display = 'flex';
+  dragRotateToggle.style.display = 'flex';
+  showExportButtons();
+}
+
+initScene();
+</script>
+</body>
+</html>
